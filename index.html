@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111317">
+<title>Зал для новичка</title>
+<style>
+  /* Цвета и общий вид */
+  :root{--bg:#111317;--card:#1b1e24;--line:#2a2e36;--text:#eef0f3;--muted:#9aa1ad;--accent:#c6f432;--warn:#ffb648}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding-bottom:80px}
+  header{padding:20px 16px 8px}
+  h1{margin:0;font-size:22px} h2{font-size:18px;margin:20px 0 10px} h3{margin:0 0 4px;font-size:16px}
+  .muted{color:var(--muted);font-size:14px}
+  main{padding:0 16px;max-width:640px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+  .opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
+  .opt{border:1px solid var(--line);background:transparent;color:var(--text);padding:10px 14px;border-radius:999px;font-size:15px}
+  .opt.on{background:var(--accent);color:#111;border-color:var(--accent);font-weight:600}
+  .btn{width:100%;background:var(--accent);color:#111;border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:700}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+  .ex{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+  .ex:first-of-type{border-top:0}
+  .tag{color:var(--accent);font-weight:700;white-space:nowrap}
+  .warn{border-color:var(--warn);color:var(--warn)}
+  nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#0c0d10;border-top:1px solid var(--line)}
+  nav button{flex:1;background:none;border:0;color:var(--muted);padding:14px 4px;font-size:14px}
+  nav button.on{color:var(--accent);font-weight:700}
+  ul{padding-left:20px;margin:6px 0} li{margin:3px 0}
+  .row{display:flex;gap:8px} .row input{flex:1;min-width:0}
+  input{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px;font-size:16px}
+  dialog{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:16px;width:min(560px,94vw);max-height:88vh;padding:16px}
+  dialog::backdrop{background:#000a}
+  .pic{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:var(--muted);font-size:14px;margin:10px 0}
+</style>
+</head>
+<body>
+<header><h1>🏋️ Зал для новичка</h1><div class="muted">Бесплатный план и техника на русском</div></header>
+<main id="app"></main>
+<nav>
+  <button data-tab="plan">План</button>
+  <button data-tab="lib">Упражнения</button>
+  <button data-tab="log">Дневник</button>
+</nav>
+<dialog id="dlg"></dialog>
+
+<script>
+/* ===== Библиотека упражнений: подсказки как от тренера + частые ошибки ===== */
+const EX = {
+  squat:{n:"Гоблет-присед (гантель у груди)",m:"Ноги, ягодицы",
+    cues:["Стопы чуть шире плеч, носки слегка наружу","Гантель прижата к груди, локти вниз","Садись назад и вниз, колени идут по направлению носков","Встаёшь, давя всей стопой, спина ровная"],
+    err:["Колени заваливаются внутрь","Пятки отрываются от пола","Спина круглится внизу"]},
+  bench:{n:"Жим лёжа",m:"Грудь, трицепс, плечи",
+    cues:["Лопатки сведены и прижаты к скамье","Хват чуть шире плеч, запястья прямые","Опускай штангу к низу груди, локти под ~45° к телу","Стопы стоят на полу всё время"],
+    err:["Локти разведены в стороны под 90°","Штанга отбивается от груди","Таз отрывается от скамьи"]},
+  rdl:{n:"Румынская тяга",m:"Задняя поверхность бедра, ягодицы",
+    cues:["Колени чуть согнуты и почти не двигаются","Отводи таз назад, будто закрываешь дверь попой","Гриф скользит близко к ногам","Опускайся, пока спина ровная — обычно до середины голени"],
+    err:["Круглая спина","Превращаешь в присед (сильно сгибаешь колени)","Гриф далеко от ног"]},
+  pulldown:{n:"Тяга верхнего блока",m:"Спина, бицепс",
+    cues:["Хват чуть шире плеч","Сначала опусти плечи вниз, потом тяни локтями","Тяни к верху груди, слегка отклонившись","Вверх отпускай медленно"],
+    err:["Тянешь за голову","Раскачиваешься всем корпусом","Плечи поднимаются к ушам"]},
+  row:{n:"Тяга гантели в наклоне",m:"Спина",
+    cues:["Рука и колено на скамье, спина параллельно полу","Тяни гантель к поясу, локоть вдоль тела","Вверху на секунду сожми лопатку","Опускай подконтрольно"],
+    err:["Скручиваешь корпус","Тянешь бицепсом рывком","Круглая спина"]},
+  ohp:{n:"Жим гантелей сидя",m:"Плечи, трицепс",
+    cues:["Спина прижата к спинке скамьи","Гантели на уровне ушей, локти чуть впереди","Выжимай вверх, не стукая гантели","Пресс напряжён"],
+    err:["Сильный прогиб в пояснице","Слишком большой вес — неполная амплитуда"]},
+  legpress:{n:"Жим ногами",m:"Ноги",
+    cues:["Стопы на ширине плеч в середине платформы","Поясница прижата к спинке","Опускай, пока таз не начинает отрываться","Вверху не выпрямляй колени до щелчка"],
+    err:["Таз отрывается от сиденья","Колени полностью «замыкаются» вверху","Колени внутрь"]},
+  lunge:{n:"Выпады с гантелями",m:"Ноги, ягодицы",
+    cues:["Шаг достаточно широкий","Корпус ровно, опускайся вертикально вниз","Колено задней ноги почти касается пола","Толкайся передней пяткой"],
+    err:["Переднее колено уходит внутрь","Слишком короткий шаг — колено далеко за носком"]},
+  incline:{n:"Жим гантелей на наклонной",m:"Верх груди, плечи",
+    cues:["Наклон скамьи 30°, не больше","Лопатки сведены","Опускай гантели до уровня груди","Выжимай вверх и чуть внутрь"],
+    err:["Слишком крутой наклон (работают плечи)","Гантели падают в стороны"]},
+  seatedrow:{n:"Тяга горизонтального блока",m:"Спина",
+    cues:["Спина ровная, грудь вперёд","Тяни рукоять к животу","Своди лопатки в конце","Возвращай медленно, не сутулясь"],
+    err:["Раскачиваешься назад-вперёд","Круглая спина в начале движения"]},
+  glute:{n:"Ягодичный мост",m:"Ягодицы",
+    cues:["Лопатки на скамье или на полу","Стопы так, чтобы вверху голень была вертикальной","Поднимай таз, сжимая ягодицы","Подбородок слегка к груди"],
+    err:["Прогиб в пояснице вместо работы ягодиц","Толкаешься носками"]},
+  curl:{n:"Сгибания рук с гантелями",m:"Бицепс",
+    cues:["Локти прижаты к бокам","Поднимай без рывка","Внизу полностью выпрями руку"],
+    err:["Помогаешь корпусом","Локти уходят вперёд"]},
+  pushdown:{n:"Разгибания на блоке (трицепс)",m:"Трицепс",
+    cues:["Локти прижаты и не двигаются","Разгибай руки до конца вниз","Вверх — до угла ~90°"],
+    err:["Локти гуляют","Наваливаешься весом тела"]},
+  bbsquat:{n:"Присед со штангой",m:"Ноги, ягодицы",
+    cues:["Гриф на верху трапеций, не на шее","Вдох животом и напряги пресс перед каждым повтором","Садись до параллели бедра с полом или чуть ниже, если спина ровная","Колени по направлению носков"],
+    err:["Круглая поясница внизу","Колени внутрь при подъёме","Вес уходит на носки"]},
+  dbbench:{n:"Жим гантелей лёжа",m:"Грудь, трицепс",
+    cues:["Лопатки сведены","Опускай гантели до уровня груди, локти под ~45°","Выжимай вверх, гантели чуть сходятся"],
+    err:["Гантели гуляют в стороны","Слишком низко опускаешь — болят плечи"]},
+  pullup:{n:"Подтягивания (или в гравитроне)",m:"Спина, бицепс",
+    cues:["Начни с того, что опусти плечи вниз","Тяни грудь к перекладине, локти вниз","Внизу почти полностью выпрями руки","Не получается — гравитрон или резинка"],
+    err:["Раскачка и рывки","Подтягиваешь только подбородок, вытягивая шею"]},
+  dips:{n:"Отжимания на брусьях (или в гравитроне)",m:"Грудь, трицепс",
+    cues:["Плечи вниз, не к ушам","Опускайся до угла в локте ~90°","Корпус слегка вперёд — больше грудь, ровно — больше трицепс"],
+    err:["Слишком глубоко — нагрузка на плечи","Плечи поднимаются вверх"]},
+  fly:{n:"Сведение рук (кроссовер или пек-дек)",m:"Грудь",
+    cues:["Локти чуть согнуты и не меняют угол","Своди руки перед собой, сжимая грудь","Назад — плавно, до лёгкого растяжения"],
+    err:["Превращаешь в жим, сгибая локти","Слишком большой вес — рывки"]},
+  latraise:{n:"Махи гантелями в стороны",m:"Плечи (средняя дельта)",
+    cues:["Лёгкий вес, локти чуть согнуты","Поднимай до уровня плеч, не выше","Ведёт локоть, а не кисть","Опускай медленно"],
+    err:["Раскачка корпусом","Поднимаешь плечи к ушам","Слишком тяжёлые гантели"]},
+  facepull:{n:"Тяга каната к лицу",m:"Задняя дельта, верх спины",
+    cues:["Блок на уровне лица, хват канатом","Тяни к лицу, разводя концы каната в стороны","Локти высоко, сожми лопатки"],
+    err:["Тянешь к груди, локти низко","Отклоняешься назад всем телом"]},
+  legcurl:{n:"Сгибания ног в тренажёре",m:"Задняя поверхность бедра",
+    cues:["Валик над пятками","Сгибай ноги до упора, таз прижат","Разгибай медленно"],
+    err:["Таз отрывается","Бросаешь вес вниз"]},
+  legext:{n:"Разгибания ног в тренажёре",m:"Передняя поверхность бедра",
+    cues:["Колено на оси тренажёра","Разгибай до конца и задержись на секунду","Опускай подконтрольно"],
+    err:["Рывки","Слишком большой вес — дискомфорт в колене"]},
+  calf:{n:"Подъёмы на носки",m:"Икры",
+    cues:["Полная амплитуда: пятки вниз до растяжения","Вверху задержись на секунду","Колени почти прямые"],
+    err:["Пружинишь на половине амплитуды","Слишком быстро"]},
+  hammer:{n:"Молотки с гантелями",m:"Бицепс, предплечья",
+    cues:["Ладони смотрят друг на друга","Локти прижаты","Без раскачки"],
+    err:["Помогаешь корпусом","Локти уходят вперёд"]},
+  kneeraise:{n:"Подъём коленей в висе",m:"Пресс",
+    cues:["Вис на перекладине или в упоре на локтях","Поднимай колени к груди, слегка скругляя таз","Опускай медленно, без раскачки"],
+    err:["Раскачиваешься","Поднимаешь только бёдра, без работы пресса"]},
+  plank:{n:"Планка",m:"Пресс, корпус",
+    cues:["Локти под плечами","Тело — прямая линия от головы до пяток","Напряги пресс и ягодицы","Дыши ровно"],
+    err:["Таз провисает","Попа задрана вверх"]}
+};
+
+/* ===== Шаблоны программ (проверенные классические схемы) ===== */
+const DAYS = {
+  fullA:{t:"Фулбади A",ex:["squat","bench","pulldown","ohp","legcurl","plank"]},
+  fullB:{t:"Фулбади B",ex:["rdl","incline","row","lunge","latraise","kneeraise"]},
+  fullC:{t:"Фулбади C",ex:["legpress","dbbench","seatedrow","glute","facepull","curl","pushdown"]},
+  upA:{t:"Верх A",ex:["bench","row","ohp","pulldown","latraise","curl","pushdown"]},
+  lowA:{t:"Низ A",ex:["squat","rdl","legext","legcurl","calf","plank"]},
+  upB:{t:"Верх B",ex:["incline","pullup","seatedrow","fly","facepull","hammer","dips"]},
+  lowB:{t:"Низ B",ex:["legpress","glute","lunge","legcurl","calf","kneeraise"]},
+  push:{t:"Толкай (грудь, плечи, трицепс)",ex:["bench","ohp","incline","latraise","fly","pushdown"]},
+  pull:{t:"Тяни (спина, бицепс)",ex:["pulldown","row","seatedrow","facepull","curl","hammer"]},
+  legs:{t:"Ноги + пресс",ex:["squat","rdl","legpress","legcurl","calf","plank"]},
+  push2:{t:"Толкай 2",ex:["dbbench","dips","ohp","latraise","fly","pushdown"]},
+  pull2:{t:"Тяни 2",ex:["pullup","row","seatedrow","facepull","hammer","curl"]},
+  legs2:{t:"Ноги 2 + пресс",ex:["lunge","glute","legext","legcurl","calf","kneeraise"]},
+  chest:{t:"Грудь + трицепс",ex:["bench","incline","fly","dips","pushdown"]},
+  back:{t:"Спина + бицепс",ex:["pulldown","row","seatedrow","pullup","curl","hammer"]},
+  shoulders:{t:"Плечи + пресс",ex:["ohp","latraise","facepull","kneeraise","plank"]},
+  arms:{t:"Руки",ex:["curl","pushdown","hammer","dips","dbbench"]}
+};
+const PROGRAMS = {
+  2:[{id:"fb2",t:"Фулбади A / B",about:"Всё тело за тренировку. Лучшее для старта.",d:["fullA","fullB"]}],
+  3:[{id:"fb3",t:"Фулбади A / B / C",about:"Классика для новичка: всё тело 3 раза в неделю.",d:["fullA","fullB","fullC"]},
+     {id:"ppl3",t:"Тяни / Толкай / Ноги",about:"Каждая группа раз в неделю, тренировки объёмнее.",d:["push","pull","legs"]}],
+  4:[{id:"ul4",t:"Верх / Низ",about:"Каждая мышца 2 раза в неделю. Отлично после 2–3 месяцев.",d:["upA","lowA","upB","lowB"]},
+     {id:"split4",t:"Сплит по группам",about:"Грудь, спина, ноги, плечи — по дню.",d:["chest","back","legs","shoulders"]}],
+  5:[{id:"ulppl",t:"Верх / Низ + Тяни / Толкай / Ноги",about:"Микс: много объёма, но мышцы успевают восстановиться.",d:["upA","lowA","push","pull","legs"]},
+     {id:"bro5",t:"Сплит по группам",about:"Отдельный день на каждую группу, включая руки.",d:["chest","back","legs","shoulders","arms"]}],
+  6:[{id:"ppl6",t:"Тяни / Толкай / Ноги × 2",about:"Для опытных: каждая мышца 2 раза в неделю.",d:["push","pull","legs","push2","pull2","legs2"]}]
+};
+const SETS = {strength:"4 × 5–6",mass:"3 × 8–12",tone:"3 × 12–15"};
+// Изоляция и пресс — всегда в лёгком режиме, даже при цели «сила»
+const ISO = {plank:"3 × 30–45 с",kneeraise:"3 × 10–15",calf:"3 × 12–20",latraise:"3 × 12–15",facepull:"3 × 12–15",fly:"3 × 10–15",curl:"3 × 10–12",hammer:"3 × 10–12",pushdown:"3 × 10–12",legcurl:"3 × 10–15",legext:"3 × 10–15"};
+const progOf = p => PROGRAMS[p.days].find(x=>x.id===p.split) ?? PROGRAMS[p.days][0];
+
+/* ===== Хранение в телефоне (если браузер не даёт — просто работаем без сохранения) ===== */
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+let profile=load("profile",null);
+let logs=load("logs",[]); // {ex, w, r, date}
+let tab="plan";
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ===== Экраны ===== */
+function render(){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  $("#app").innerHTML = tab==="plan" ? (profile?planView():quizView()) : tab==="lib" ? libView() : logView();
+}
+
+let draft={level:"new",days:3,split:"fb3",goal:"mass",injury:false};
+function quizView(){
+  const q=(key,label,opts)=>`<h2>${label}</h2><div class="opts">${opts.map(([v,t])=>
+    `<button class="opt ${draft[key]===v?"on":""}" onclick="pick('${key}',${JSON.stringify(v).replace(/"/g,"'")})">${t}</button>`).join("")}</div>`;
+  return `<div class="card">
+    ${q("level","Какой у тебя опыт?",[["new","Только начинаю"],["back","Возвращаюсь после перерыва"],["stuck","Застрял, хочу сменить программу"]])}
+    ${q("days","Сколько раз в неделю можешь ходить?",[[2,"2"],[3,"3"],[4,"4"],[5,"5"],[6,"6"]])}
+    ${draft.level==="new"&&draft.days>=5?`<div class="card warn" style="margin-top:-6px">Новичку обычно хватает 3–4 тренировок: мышцы растут во время отдыха. Но выбор за тобой.</div>`:""}
+    <h2>Какая схема?</h2>${PROGRAMS[draft.days].map(p=>`<div class="card" style="cursor:pointer;${p.id===draft.split?"border-color:var(--accent)":""}" onclick="pick('split','${p.id}')">
+      <h3>${p.id===draft.split?"✅ ":""}${p.t}</h3><div class="muted">${p.about}</div></div>`).join("")}
+    ${q("goal","Какая цель?",[["mass","Набрать мышцы"],["strength","Стать сильнее"],["tone","Подтянуть форму"]])}
+    ${q("injury","Есть травмы или боли?",[[false,"Нет"],[true,"Да"]])}
+    <button class="btn" onclick="makePlan()">Составить план</button></div>`;
+}
+function pick(k,v){draft[k]=v;if(k==="days")draft.split=PROGRAMS[v][0].id;render()}
+function makePlan(){profile={...draft};save("profile",profile);render()}
+
+function planView(){
+  const p=progOf(profile);
+  const sets = profile.level==="new" ? SETS.mass : SETS[profile.goal];
+  const tips={
+    new:"Первые 2–4 недели бери лёгкий вес и учи технику. Добавляй вес, когда все подходы даются с запасом 2–3 повтора.",
+    back:"Первые 2 недели делай на 1 подход меньше и бери ~60% от прежних весов. Тело вспомнит быстро, связки — медленнее.",
+    stuck:"Новая схема — уже стимул. Записывай веса в дневник и каждую неделю пробуй +1 повтор или +2,5 кг."
+  };
+  return `${profile.injury?`<div class="card warn">⚠️ Раз есть травмы или боли — перед началом покажись врачу. Если упражнение вызывает боль, пропусти его.</div>`:""}
+  <div class="card"><h3>${p.t}, ${profile.days} р/нед</h3><div class="muted">${p.about}</div><div class="muted">Подходы × повторы: <b>${sets}</b>. Отдых 1,5–2 мин.</div>
+  <p class="muted" style="margin-bottom:0">💡 ${tips[profile.level]}</p></div>
+  ${p.d.map((id,i)=>`<div class="card"><h3>День ${i+1} — ${DAYS[id].t}</h3>
+    ${DAYS[id].ex.map(e=>`<div class="ex" onclick="openEx('${e}')"><span>${EX[e].n}</span>
+      <span class="tag">${ISO[e]??sets} ›</span></div>`).join("")}</div>`).join("")}
+  <div class="card muted">🔥 Перед каждой тренировкой: 5–10 мин кардио + 1–2 лёгких разминочных подхода в первом упражнении.</div>
+  <button class="btn ghost" onclick="profile=null;save('profile',null);render()">Пройти анкету заново</button>
+  <p class="muted">Это общий план, не замена тренеру или врачу.</p>`;
+}
+
+function libView(){
+  return `<h2>Упражнения</h2><div class="card">${Object.entries(EX).map(([id,e])=>
+    `<div class="ex" onclick="openEx('${id}')"><span>${e.n}<br><span class="muted">${e.m}</span></span><span class="tag">›</span></div>`).join("")}</div>`;
+}
+
+function logView(){
+  if(!logs.length) return `<h2>Дневник</h2><div class="card muted">Пока пусто. Открой упражнение в плане и запиши подход.</div>`;
+  const byDate={};
+  [...logs].reverse().forEach(l=>(byDate[l.date]??=[]).push(l));
+  return `<h2>Дневник</h2>${Object.entries(byDate).map(([d,ls])=>`<div class="card"><h3>${d}</h3>
+    ${ls.map(l=>`<div class="muted">${EX[l.ex]?.n??l.ex}: <b style="color:var(--text)">${esc(l.w)} кг × ${esc(l.r)}</b></div>`).join("")}</div>`).join("")}`;
+}
+
+/* ===== Карточка упражнения: техника + запись подхода ===== */
+function openEx(id){
+  const e=EX[id], hist=logs.filter(l=>l.ex===id).slice(-5).reverse();
+  const d=$("#dlg");
+  d.innerHTML=`<h3>${e.n}</h3><div class="muted">${e.m}</div>
+    <div class="pic">🖼 Картинка техники — скоро</div>
+    <b>Как делать</b><ul>${e.cues.map(c=>`<li>${c}</li>`).join("")}</ul>
+    <b style="color:var(--warn)">Частые ошибки</b><ul>${e.err.map(c=>`<li>${c}</li>`).join("")}</ul>
+    <b>Записать подход</b>
+    <div class="row" style="margin:8px 0"><input id="w" type="number" inputmode="decimal" placeholder="Вес, кг"><input id="r" type="number" inputmode="numeric" placeholder="Повторы"></div>
+    <button class="btn" onclick="addLog('${id}')">Сохранить</button>
+    ${hist.length?`<p class="muted">Последние: ${hist.map(h=>`${esc(h.w)}×${esc(h.r)} (${h.date})`).join(", ")}</p>`:""}
+    <button class="btn ghost" style="margin-top:10px" onclick="$('#dlg').close()">Закрыть</button>`;
+  d.showModal();
+}
+function addLog(id){
+  const w=$("#w").value.trim(), r=$("#r").value.trim();
+  if(!w||!r) return alert("Введи вес и повторы");
+  logs.push({ex:id,w,r,date:new Date().toLocaleDateString("ru-RU")});
+  save("logs",logs);
+  openEx(id); if(tab==="log") render();
+}
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});
+render();
+</script>
+</body>
+</html>
