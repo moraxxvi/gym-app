@@ -68,6 +68,19 @@
   .rest .stats{text-align:left}
   .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:14px}
   .cal span{padding:8px 0;border-radius:2px} .cal span.on{background:var(--acc);font-weight:700} .cal span.now{outline:1px solid var(--muted)}
+  .seg{display:flex;margin:16px 0 0;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .seg button{flex:1;background:var(--card);color:var(--muted);border:0;padding:11px;font:600 13px var(--head);text-transform:uppercase;cursor:pointer}
+  .seg button.on{background:var(--acc);color:#fff}
+  .lbl{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);margin:8px 0}
+  input.txt{font:16px var(--body);padding:12px}
+  .eday .row input.txt{font:600 16px var(--body)}
+  .erow{border-top:1px solid var(--line);padding:10px 0 4px;margin-top:10px}
+  .ename{font-weight:600;font-size:15px;margin-bottom:6px}
+  .ectl{display:flex;align-items:center;gap:3px} .ectl span{color:var(--muted)}
+  .ectl input{width:42px;flex:none;padding:8px 2px;font-size:17px;text-align:center}
+  .ib,.unit{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:4px;min-width:32px;height:38px;cursor:pointer;flex:none;font-size:15px;padding:0}
+  .unit{color:var(--acc);font-size:13px;padding:0 6px} .ectl .ib:first-of-type{margin-left:auto}
+  .card.sel{border-color:var(--acc)}
   .chart{width:100%} .chart text{fill:var(--muted);font-size:10px} .chart text.hi{fill:var(--text);font-size:13px;font-weight:600}
 </style>
 </head>

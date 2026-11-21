@@ -7,7 +7,14 @@ const MG = {
   curl:["biceps"], pushdown:["triceps"], dbbench:["chest","triceps"], pullup:["back","biceps"],
   dips:["chest","triceps"], fly:["chest"], latraise:["shoulders"], facepull:["reardelt","traps"],
   legcurl:["hams"], legext:["quads"], calf:["calves"], hammer:["biceps","forearms"],
-  kneeraise:["abs"], plank:["abs"]
+  kneeraise:["abs"], plank:["abs"],
+  deadlift:["back","glutes","hams"], bbrow:["back","biceps","reardelt"], tbar:["back","biceps","reardelt"],
+  hipthrust:["glutes","hams"], bulgarian:["quads","glutes"], hack:["quads","glutes"], smithsquat:["quads","glutes"],
+  seatcalf:["calves"], pushup:["chest","triceps","shoulders"], chestpress:["chest","triceps"],
+  inclinebb:["chest","shoulders","triceps"], butterfly:["chest"], chinup:["back","biceps"], straightpd:["back"],
+  shrug:["traps"], arnold:["shoulders","triceps"], reverfly:["reardelt"], bbcurl:["biceps","forearms"],
+  preacher:["biceps"], skull:["triceps"], ohext:["triceps"], cablecrunch:["abs"], crunch:["abs"], sideplank:["abs"],
+  abduct:["glutes"], hyper:["back","glutes","hams"], stepup:["quads","glutes"]
 };
 
 /* Чем заменить, если тренажёр занят или его нет (та же мышца) */
@@ -19,8 +26,16 @@ const ALT = {
   curl:["hammer"], pushdown:["dips"], dbbench:["bench","incline"], pullup:["pulldown"],
   dips:["pushdown","dbbench"], fly:["dbbench","incline"], latraise:["ohp"], facepull:["row","seatedrow"],
   legcurl:["rdl","glute"], legext:["squat","legpress"], calf:[], hammer:["curl"],
-  kneeraise:["plank"], plank:["kneeraise"]
+  kneeraise:["plank"], plank:["kneeraise"],
+  deadlift:["rdl","hyper"], bbrow:["tbar","row","seatedrow"], tbar:["bbrow","seatedrow"], hipthrust:["glute","rdl"],
+  bulgarian:["lunge","stepup"], hack:["legpress","smithsquat","squat"], smithsquat:["squat","hack","legpress"],
+  seatcalf:["calf"], pushup:["bench","dbbench"], chestpress:["bench","dbbench"], inclinebb:["incline","bench"],
+  butterfly:["fly","dbbench"], chinup:["pullup","pulldown"], straightpd:["pulldown"], shrug:["facepull"],
+  arnold:["ohp","latraise"], reverfly:["facepull"], bbcurl:["curl","hammer"], preacher:["curl","bbcurl"],
+  skull:["ohext","pushdown"], ohext:["skull","pushdown"], cablecrunch:["crunch","kneeraise"], crunch:["cablecrunch","plank"],
+  sideplank:["plank"], abduct:["glute"], hyper:["rdl","glute"], stepup:["lunge","bulgarian"]
 };
+ALT.calf=["seatcalf"]; ALT.pullup.push("chinup"); ALT.fly.unshift("butterfly"); ALT.squat.push("hack","smithsquat");
 
 /* Фильтр в библиотеке */
 const GROUPS = {
