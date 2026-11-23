@@ -1,6 +1,11 @@
 /* ================= Хранение в телефоне ================= */
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
-const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const save=(k,v)=>{
+  if(DEMO) return;                                   // в демо-туре ничего не сохраняем
+  try{localStorage.setItem(k,JSON.stringify(v));
+    if(["profile","myprogs","myex"].includes(k)) localStorage.setItem("objts",Date.now())}catch{}
+  queueSync();                                       // и отправляем в облако
+};
 let profile=load("profile",null);   // анкета + замены + выбранная своя программа
 let logs=load("logs",[]);           // подходы: {ex,w,r,sec,date,ts,sid}
 let sessions=load("sessions",[]);   // тренировки: {sid,ts,date,day,dayIdx,prog,dur}
@@ -69,12 +74,17 @@ function suggest(ex,t){
 
 /* ================= Отрисовка ================= */
 function render(){
+  if(!ACCT&&!DEMO&&!["welcome","auth"].includes(tab)) tab="welcome";   // без аккаунта — приветствие и регистрация
   if(tab==="workout"&&!W&&!summary) tab="today";
-  document.body.classList.toggle("inwork",tab==="workout");
+  const gate=["welcome","auth"].includes(tab);
+  document.body.classList.toggle("inwork",tab==="workout"||gate);
   const nt=tab==="edit"?"plan":tab;
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===nt));
-  const v={today:todayView,plan:planView,lib:libView,progress:progressView,guides:guidesView,workout:workoutView,edit:editView}[tab];
-  $("#app").innerHTML=(!profile&&["today","plan"].includes(tab))?quizView():v();
+  const v={today:todayView,plan:planView,lib:libView,progress:progressView,guides:guidesView,workout:workoutView,edit:editView,
+    welcome:welcomeView,auth:authView,account:accountView}[tab];
+  const acct=ACCT&&!DEMO&&!gate&&!["workout","edit","account"].includes(tab)
+    ?`<button class="acctbtn" onclick="tab='account';render()" aria-label="Аккаунт">${esc((ACCT.name||ACCT.email)[0].toUpperCase())}</button>`:"";
+  $("#app").innerHTML=acct+((!profile&&["today","plan"].includes(tab))?quizView():v());
   if(tab==="workout") tick();
   window.scrollTo(0,0);
 }
@@ -391,9 +401,4 @@ function guidesView(){
   ${GUIDES.map(g=>`<details class="card guide"><summary>${g.t}</summary><ul>${g.b.map(x=>`<li>${x}</li>`).join("")}</ul></details>`).join("")}`;
 }
 
-/* ================= Запуск ================= */
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{if(tab==="edit"&&!confirm("Выйти из конструктора без сохранения?"))return;ED=null;tab=b.dataset.tab;render()});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&tab==="workout")tick()});
-if(W&&!W.tg){W=null;save("workout",null);tab="today"} // незаконченная тренировка из старой версии
-render();
-if("serviceWorker" in navigator&&location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+/* Запуск — в конце auth.js (он подключается последним) */
